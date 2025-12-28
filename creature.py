@@ -13,16 +13,19 @@ class NeuralNetwork:
 
     def __init__(self, weights=None):
         if weights is None:
-            # W1: (11, 12)
             self.W1 = np.random.randn(self.INPUT_SIZE, self.HIDDEN_SIZE) * 0.1
-            # b1: MUST BE (1, 12)
-            self.b1 = np.zeros((1, self.HIDDEN_SIZE)) 
-            # W2: (12, 4)
+            # Ensure 2D shape for bias 1
+            self.b1 = np.zeros(self.HIDDEN_SIZE).reshape(1, -1) 
+            
             self.W2 = np.random.randn(self.HIDDEN_SIZE, self.OUTPUT_SIZE) * 0.1
-            # b2: MUST BE (1, 4)
-            self.b2 = np.zeros((1, self.OUTPUT_SIZE)) 
+            # Ensure 2D shape for bias 2
+            self.b2 = np.zeros(self.OUTPUT_SIZE).reshape(1, -1) 
         else:
-            self.W1, self.b1, self.W2, self.b2 = weights
+            # When loading DNA, ensure the biases are 2D after unpacking
+            self.W1 = weights[0]
+            self.b1 = weights[1].reshape(1, -1) # Enforce 2D on b1
+            self.W2 = weights[2]
+            self.b2 = weights[3].reshape(1, -1) # Enforce 2D on b2
 
     def sigmoid(self, x):
         """Standard sigmoid activation function."""
@@ -50,32 +53,31 @@ class NeuralNetwork:
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """
         Creates a slightly mutated copy of the parent DNA.
-        The shape corruption is fixed by using indexing to modify the list 
-        of copies, ensuring NumPy maintains the matrix structure.
+        Explicitly reshapes biases to prevent shape corruption.
         """
         
         # 1. Create a LIST of deep copies
         dna_list = [d.copy() for d in dna] 
 
-        # 2. Iterate through the list using index to ensure correct reassignment
+        # 2. ENFORCE BIAS SHAPES
+        # b1 is at index 1, b2 is at index 3
+        if dna_list[1].ndim == 1:
+             dna_list[1] = dna_list[1].reshape(1, -1) # b1 must be (1, 12)
+        if dna_list[3].ndim == 1:
+             dna_list[3] = dna_list[3].reshape(1, -1) # b2 must be (1, 4)
+
+        # 3. Iterate through the list
         for i, matrix in enumerate(dna_list):
             
-            # Ensure the matrix is 2D
-            matrix_2d = np.atleast_2d(matrix)
-
-            # Generate mask and mutation values based on the 2D shape
-            mask = np.random.rand(*matrix_2d.shape) < mutation_rate
-            mutation_values = np.random.randn(*matrix_2d.shape) * mutation_strength
+            # Use the matrix directly (it should already be 2D now)
+            mask = np.random.rand(*matrix.shape) < mutation_rate
+            mutation_values = np.random.randn(*matrix.shape) * mutation_strength
             
             # Apply mutation
-            matrix_2d[mask] += mutation_values
+            matrix[mask] += mutation_values
             
-            # CRITICAL: Re-assign the potentially modified matrix back into the list
-            # Since matrix_2d is a view, this might not be strictly necessary, 
-            # but it is a strong defense against corruption.
-            dna_list[i] = matrix_2d
+            dna_list[i] = matrix # Reassign the modified array
 
-        # Return the list as a tuple
         return tuple(dna_list)
 
 # ==============================================================================
