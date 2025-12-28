@@ -13,11 +13,14 @@ class NeuralNetwork:
 
     def __init__(self, weights=None):
         if weights is None:
-            # Initialize random weights
+            # W1: (11, 12)
             self.W1 = np.random.randn(self.INPUT_SIZE, self.HIDDEN_SIZE) * 0.1
-            self.b1 = np.zeros((1, self.HIDDEN_SIZE))
+            # b1: MUST BE (1, 12)
+            self.b1 = np.zeros((1, self.HIDDEN_SIZE)) 
+            # W2: (12, 4)
             self.W2 = np.random.randn(self.HIDDEN_SIZE, self.OUTPUT_SIZE) * 0.1
-            self.b2 = np.zeros((1, self.OUTPUT_SIZE))
+            # b2: MUST BE (1, 4)
+            self.b2 = np.zeros((1, self.OUTPUT_SIZE)) 
         else:
             self.W1, self.b1, self.W2, self.b2 = weights
 
@@ -27,18 +30,15 @@ class NeuralNetwork:
 
     def forward(self, inputs):
         """Processes the environment state to determine the action."""
-        # Convert input list/array to a (1, INPUT_SIZE) numpy array
         X = np.array(inputs).reshape(1, -1)
 
-        # Layer 1: Input -> Hidden
+        # Layer 1
         L1 = np.dot(X, self.W1) + self.b1
         H = self.sigmoid(L1)
 
-        # Layer 2: Hidden -> Output
+        # Layer 2
         L2 = np.dot(H, self.W2) + self.b2
         
-        # The action is the index of the highest output value
-        # 0: Fwd, 1: Back, 2: Left, 3: Right
         action_index = np.argmax(L2) 
         return action_index
 
@@ -51,12 +51,13 @@ class NeuralNetwork:
         """Creates a slightly mutated copy of the parent DNA."""
         W1, b1, W2, b2 = [d.copy() for d in dna] # Deep copy
 
+        # Loop through all DNA matrices/arrays
         for matrix in [W1, b1, W2, b2]:
-            # Create a mask for mutation probability
+            # Create a mask for mutation probability (Shape check is implicit here)
             mask = np.random.rand(*matrix.shape) < mutation_rate
-            # Generate random values for mutation
             mutation_values = np.random.randn(*matrix.shape) * mutation_strength
-            # Apply mutation
+            
+            # This is where the ValueError occurred if shapes were mismatched
             matrix[mask] += mutation_values
 
         return (W1, b1, W2, b2)
