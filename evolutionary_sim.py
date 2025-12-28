@@ -37,11 +37,12 @@ class Environment:
         # 1. Spawn the "Seed" creature (cloned from the fittest)
         if self.fittest_dna:
             # Clone the fittest from the previous era
-            self.creatures.append(Creature(self.WORLD_SIZE, self.fittest_dna))
+            W1, b1, W2, b2 = self.fittest_dna
+            self.creatures.append(Creature(self.WORLD_SIZE, (W1, b1, W2, b2)))
             
             # The rest are mutated copies (Offspring)
             for _ in range(self.NUM_CREATURES - 1):
-                mutated_dna = NeuralNetwork.mutate(self.fittest_dna)
+                mutated_dna = NeuralNetwork.mutate((W1, b1, W2, b2))
                 self.creatures.append(Creature(self.WORLD_SIZE, mutated_dna))
         else:
             # Generation 1: all creatures have random DNA

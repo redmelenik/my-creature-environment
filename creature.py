@@ -49,11 +49,6 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """Creates a slightly mutated copy of the parent DNA."""
-        
-        # DEFENSIVE FIX: Explicitly unpack only the 4 expected components
-        if len(dna) != 4:
-             # This should ideally never happen if get_dna() is correct
-             raise ValueError(f"DNA tuple has {len(dna)} components, expected 4.")
              
         W1, b1, W2, b2 = [d.copy() for d in dna] 
 
