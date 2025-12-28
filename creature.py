@@ -48,28 +48,35 @@ class NeuralNetwork:
 
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
-        """Creates a slightly mutated copy of the parent DNA."""
+        """
+        Creates a slightly mutated copy of the parent DNA.
+        The shape corruption is fixed by using indexing to modify the list 
+        of copies, ensuring NumPy maintains the matrix structure.
+        """
         
-        # 1. Deep copy the components
-        W1, b1, W2, b2 = [d.copy() for d in dna] 
+        # 1. Create a LIST of deep copies
+        dna_list = [d.copy() for d in dna] 
 
-        # 2. Iterate through the copies
-        for matrix in [W1, b1, W2, b2]:
+        # 2. Iterate through the list using index to ensure correct reassignment
+        for i, matrix in enumerate(dna_list):
             
-            # CRUCIAL FIX: Ensure the matrix is treated as 2D for shape consistency
+            # Ensure the matrix is 2D
             matrix_2d = np.atleast_2d(matrix)
 
             # Generate mask and mutation values based on the 2D shape
             mask = np.random.rand(*matrix_2d.shape) < mutation_rate
             mutation_values = np.random.randn(*matrix_2d.shape) * mutation_strength
             
-            # Apply mutation to the 2D version
+            # Apply mutation
             matrix_2d[mask] += mutation_values
             
-            # Note: Because the matrix is passed by reference (it's a numpy array), 
-            # modifying matrix_2d modifies the original W1/b1/W2/b2 copy.
+            # CRITICAL: Re-assign the potentially modified matrix back into the list
+            # Since matrix_2d is a view, this might not be strictly necessary, 
+            # but it is a strong defense against corruption.
+            dna_list[i] = matrix_2d
 
-        return (W1, b1, W2, b2)
+        # Return the list as a tuple
+        return tuple(dna_list)
 
 # ==============================================================================
 # 2. CREATURE CLASS
