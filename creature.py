@@ -49,15 +49,19 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """Creates a slightly mutated copy of the parent DNA."""
-        W1, b1, W2, b2 = [d.copy() for d in dna] # Deep copy
+        
+        # DEFENSIVE FIX: Explicitly unpack only the 4 expected components
+        if len(dna) != 4:
+             # This should ideally never happen if get_dna() is correct
+             raise ValueError(f"DNA tuple has {len(dna)} components, expected 4.")
+             
+        W1, b1, W2, b2 = [d.copy() for d in dna] 
 
-        # Loop through all DNA matrices/arrays
+        # Loop through only the 4 copied NumPy arrays
         for matrix in [W1, b1, W2, b2]:
-            # Create a mask for mutation probability (Shape check is implicit here)
             mask = np.random.rand(*matrix.shape) < mutation_rate
             mutation_values = np.random.randn(*matrix.shape) * mutation_strength
             
-            # This is where the ValueError occurred if shapes were mismatched
             matrix[mask] += mutation_values
 
         return (W1, b1, W2, b2)
