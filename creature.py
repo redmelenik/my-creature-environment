@@ -49,15 +49,25 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """Creates a slightly mutated copy of the parent DNA."""
-             
+        
+        # 1. Deep copy the components
         W1, b1, W2, b2 = [d.copy() for d in dna] 
 
-        # Loop through only the 4 copied NumPy arrays
+        # 2. Iterate through the copies
         for matrix in [W1, b1, W2, b2]:
-            mask = np.random.rand(*matrix.shape) < mutation_rate
-            mutation_values = np.random.randn(*matrix.shape) * mutation_strength
             
-            matrix[mask] += mutation_values
+            # CRUCIAL FIX: Ensure the matrix is treated as 2D for shape consistency
+            matrix_2d = np.atleast_2d(matrix)
+
+            # Generate mask and mutation values based on the 2D shape
+            mask = np.random.rand(*matrix_2d.shape) < mutation_rate
+            mutation_values = np.random.randn(*matrix_2d.shape) * mutation_strength
+            
+            # Apply mutation to the 2D version
+            matrix_2d[mask] += mutation_values
+            
+            # Note: Because the matrix is passed by reference (it's a numpy array), 
+            # modifying matrix_2d modifies the original W1/b1/W2/b2 copy.
 
         return (W1, b1, W2, b2)
 
