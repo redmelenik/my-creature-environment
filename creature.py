@@ -13,19 +13,27 @@ class NeuralNetwork:
 
     def __init__(self, weights=None):
         if weights is None:
+            # W1: (11, 12)
             self.W1 = np.random.randn(self.INPUT_SIZE, self.HIDDEN_SIZE) * 0.1
-            # Ensure 2D shape for bias 1
+            # b1: Guarantee 2D shape (1, 12)
             self.b1 = np.zeros(self.HIDDEN_SIZE).reshape(1, -1) 
             
+            # W2: (12, 4)
             self.W2 = np.random.randn(self.HIDDEN_SIZE, self.OUTPUT_SIZE) * 0.1
-            # Ensure 2D shape for bias 2
+            # b2: Guarantee 2D shape (1, 4)
             self.b2 = np.zeros(self.OUTPUT_SIZE).reshape(1, -1) 
         else:
-            # When loading DNA, ensure the biases are 2D after unpacking
-            self.W1 = weights[0]
-            self.b1 = weights[1].reshape(1, -1) # Enforce 2D on b1
-            self.W2 = weights[2]
-            self.b2 = weights[3].reshape(1, -1) # Enforce 2D on b2
+            # When loading DNA, ensure all components are 2D
+            self.W1 = np.atleast_2d(weights[0])
+            self.b1 = np.atleast_2d(weights[1])
+            self.W2 = np.atleast_2d(weights[2])
+            self.b2 = np.atleast_2d(weights[3])
+
+            # Force bias to be (1, N) for sure
+            if self.b1.shape[0] != 1:
+                 self.b1 = self.b1.reshape(1, -1)
+            if self.b2.shape[0] != 1:
+                 self.b2 = self.b2.reshape(1, -1)
 
     def sigmoid(self, x):
         """Standard sigmoid activation function."""
@@ -51,33 +59,24 @@ class NeuralNetwork:
 
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
-        """
-        Creates a slightly mutated copy of the parent DNA and applies mutation 
-        by addressing the four elements directly to prevent shape corruption.
-        """
+        """Creates a slightly mutated copy of the parent DNA."""
         
-        # 1. Create a LIST of deep copies
+        # Create a list of deep copies
         dna_list = [d.copy() for d in dna] 
 
-        # 2. Iterate through the four specific indices (W1, b1, W2, b2)
-        # W1 is at index 0, b1 is at index 1, W2 is at index 2, b2 is at index 3
+        # Iterate through the four components
         for i in range(4):
             matrix = dna_list[i]
             
-            # Ensure 2D shape for calculation
-            matrix_2d = np.atleast_2d(matrix)
-
-            # Generate mutation mask and values
-            mask = np.random.rand(*matrix_2d.shape) < mutation_rate
-            mutation_values = np.random.randn(*matrix_2d.shape) * mutation_strength
+            # Use the matrix directly, which is now guaranteed to be 2D
+            mask = np.random.rand(*matrix.shape) < mutation_rate
+            mutation_values = np.random.randn(*matrix.shape) * mutation_strength
             
             # Apply mutation
-            matrix_2d[mask] += mutation_values
+            matrix[mask] += mutation_values
             
-            # CRUCIAL: We must ensure the original list item maintains its intended shape.
-            # If the original matrix was 1D (like a bias), but was mutated as 2D, 
-            # we must save the 2D version back into the list.
-            dna_list[i] = matrix_2d
+            # Update the list
+            dna_list[i] = matrix
 
         return tuple(dna_list)
 
