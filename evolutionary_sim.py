@@ -187,7 +187,7 @@ class Environment:
             # Return empty/placeholder data if the simulation is somehow empty
             return {
                 'summary': {
-                    'generation': self.generation,
+                    'generation': self.current_generation,
                     'fittest_score': 0.0,
                     'alive_count': 0,
                     'fittest_tokens': {'B': 0, 'D': 0, 'L': 0},
