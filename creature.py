@@ -4,6 +4,21 @@ import numpy as np
 # 1. NEURAL NETWORK CLASS (The Brain/DNA)
 # ==============================================================================
 
+# Helper function to apply mutation safely
+def _apply_mutation(matrix, rate, strength):
+    """Applies mutation to a single NumPy matrix, ensuring 2D shape."""
+    # 1. Force matrix to be 2D (Crucial)
+    matrix_2d = np.atleast_2d(matrix)
+    
+    # 2. Create mutation elements using the confirmed 2D shape
+    mask = np.random.rand(*matrix_2d.shape) < rate
+    mutation_values = np.random.randn(*matrix_2d.shape) * strength
+    
+    # 3. Apply mutation in place
+    matrix_2d[mask] += mutation_values
+    
+    return matrix_2d
+
 class NeuralNetwork:
     """Represents the creature's Brain and DNA (weights/biases)."""
 
@@ -13,27 +28,20 @@ class NeuralNetwork:
 
     def __init__(self, weights=None):
         if weights is None:
-            # W1: (11, 12)
             self.W1 = np.random.randn(self.INPUT_SIZE, self.HIDDEN_SIZE) * 0.1
-            # b1: Guarantee 2D shape (1, 12)
-            self.b1 = np.zeros(self.HIDDEN_SIZE).reshape(1, -1) 
-            
-            # W2: (12, 4)
+            self.b1 = np.zeros(self.HIDDEN_SIZE).reshape(1, -1) # Guarantee 2D
             self.W2 = np.random.randn(self.HIDDEN_SIZE, self.OUTPUT_SIZE) * 0.1
-            # b2: Guarantee 2D shape (1, 4)
-            self.b2 = np.zeros(self.OUTPUT_SIZE).reshape(1, -1) 
+            self.b2 = np.zeros(self.OUTPUT_SIZE).reshape(1, -1) # Guarantee 2D
         else:
-            # When loading DNA, ensure all components are 2D
+            # Load and guarantee 2D shape for all components
             self.W1 = np.atleast_2d(weights[0])
             self.b1 = np.atleast_2d(weights[1])
             self.W2 = np.atleast_2d(weights[2])
             self.b2 = np.atleast_2d(weights[3])
 
-            # Force bias to be (1, N) for sure
-            if self.b1.shape[0] != 1:
-                 self.b1 = self.b1.reshape(1, -1)
-            if self.b2.shape[0] != 1:
-                 self.b2 = self.b2.reshape(1, -1)
+            # Ensure biases are (1, N) for sure
+            if self.b1.shape[0] != 1: self.b1 = self.b1.reshape(1, -1)
+            if self.b2.shape[0] != 1: self.b2 = self.b2.reshape(1, -1)
 
     def sigmoid(self, x):
         """Standard sigmoid activation function."""
@@ -59,24 +67,16 @@ class NeuralNetwork:
 
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
-        """Creates a slightly mutated copy of the parent DNA."""
+        """Creates a slightly mutated copy of the parent DNA using the helper function."""
         
         # Create a list of deep copies
         dna_list = [d.copy() for d in dna] 
 
-        # Iterate through the four components
-        for i in range(4):
-            matrix = dna_list[i]
-            
-            # Use the matrix directly, which is now guaranteed to be 2D
-            mask = np.random.rand(*matrix.shape) < mutation_rate
-            mutation_values = np.random.randn(*matrix.shape) * mutation_strength
-            
-            # Apply mutation
-            matrix[mask] += mutation_values
-            
-            # Update the list
-            dna_list[i] = matrix
+        # Apply mutation to each component using the safe helper function
+        dna_list[0] = _apply_mutation(dna_list[0], mutation_rate, mutation_strength) # W1
+        dna_list[1] = _apply_mutation(dna_list[1], mutation_rate, mutation_strength) # b1
+        dna_list[2] = _apply_mutation(dna_list[2], mutation_rate, mutation_strength) # W2
+        dna_list[3] = _apply_mutation(dna_list[3], mutation_rate, mutation_strength) # b2
 
         return tuple(dna_list)
 
