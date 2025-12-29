@@ -219,7 +219,7 @@ class Environment:
 
         return {
             'summary': {
-                'generation': self.generation,
+                'generation': self.current_generation,
                 'fittest_score': fittest.fitness,
                 'alive_count': sum(1 for c in self.creatures if c.alive),
                 'fittest_tokens': {'B': fittest.brain_tokens, 'D': fittest.body_tokens, 'L': fittest.leg_tokens},
