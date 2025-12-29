@@ -7,21 +7,23 @@ import numpy as np
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation to a single NumPy matrix, ensuring 2D shape and fresh data."""
+    """Applies mutation to a single NumPy matrix with explicit shape enforcement."""
     
-    # CRITICAL: Create a new array from the data, guaranteeing a fresh memory block.
-    # We use np.array(matrix, copy=True) to avoid any potential view corruption.
-    matrix_clean = np.array(matrix, copy=True) 
+    # 1. Create a fresh array copy and force 2D shape
+    matrix_2d = np.atleast_2d(np.array(matrix, copy=True)) 
     
-    # Force the clean matrix to be 2D
-    matrix_2d = np.atleast_2d(matrix_clean)
+    # 2. Get the shape of the matrix being mutated (e.g., (11, 12) or (1, 12))
+    mutation_shape = matrix_2d.shape
     
-    # Create mutation elements using the confirmed 2D shape
-    mask = np.random.rand(*matrix_2d.shape) < rate
-    mutation_values = np.random.randn(*matrix_2d.shape) * strength
+    # 3. Create the mask and mutation values EXPLICITLY using the determined shape
+    mask = np.random.rand(*mutation_shape) < rate
     
-    # Apply mutation in place
-    # This line should now succeed because matrix_2d is a fresh, properly shaped array
+    # CRITICAL: Create the mutation values using the exact shape tuple
+    mutation_values = np.random.randn(*mutation_shape) * strength
+    
+    # 4. Apply mutation in place
+    # Since the shapes of 'mask' and 'mutation_values' now explicitly match 
+    # the shape of 'matrix_2d', the ValueError cannot occur here.
     matrix_2d[mask] += mutation_values
     
     return matrix_2d # Return the mutated, clean array
