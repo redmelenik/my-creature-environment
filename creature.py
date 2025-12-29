@@ -82,18 +82,25 @@ class NeuralNetwork:
 
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
-        """Creates a slightly mutated copy of the parent DNA using the helper function."""
+        """
+        Creates a slightly mutated copy of the parent DNA and applies mutation
+        to four separate, independently named array copies to prevent memory bleed.
+        """
         
-        # 1. Create a list of deep copies (we keep this for safety)
-        dna_list = [d.copy() for d in dna] 
-
-        # 2. Apply mutation to each component, overwriting the list with the clean result
-        dna_list[0] = _apply_mutation(dna_list[0], mutation_rate, mutation_strength) # W1
-        dna_list[1] = _apply_mutation(dna_list[1], mutation_rate, mutation_strength) # b1
-        dna_list[2] = _apply_mutation(dna_list[2], mutation_rate, mutation_strength) # W2
-        dna_list[3] = _apply_mutation(dna_list[3], mutation_rate, mutation_strength) # b2
-
-        return tuple(dna_list)
+        # 1. Unpack the DNA tuple into four distinct, fresh variables
+        W1_copy = dna[0].copy()
+        b1_copy = dna[1].copy()
+        W2_copy = dna[2].copy()
+        b2_copy = dna[3].copy()
+        
+        # 2. Apply mutation to each component explicitly
+        W1_mutated = _apply_mutation(W1_copy, mutation_rate, mutation_strength) 
+        b1_mutated = _apply_mutation(b1_copy, mutation_rate, mutation_strength) 
+        W2_mutated = _apply_mutation(W2_copy, mutation_rate, mutation_strength) 
+        b2_mutated = _apply_mutation(b2_copy, mutation_rate, mutation_strength) 
+        
+        # 3. Return the new tuple
+        return (W1_mutated, b1_mutated, W2_mutated, b2_mutated)
 
 # ==============================================================================
 # 2. CREATURE CLASS
