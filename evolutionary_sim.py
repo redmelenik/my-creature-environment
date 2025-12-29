@@ -30,19 +30,24 @@ class Environment:
                 'collected': False
             })
 
-    def _initialize_creatures(self):
-        """Spawns 100 creatures, inheriting or mutating the fittest DNA."""
-        self.creatures = []
-        
         # 1. Spawn the "Seed" creature (cloned from the fittest)
         if self.fittest_dna:
-            # Clone the fittest from the previous era
-            W1, b1, W2, b2 = self.fittest_dna
-            self.creatures.append(Creature(self.WORLD_SIZE, (W1, b1, W2, b2)))
+            # Unpack the 6-element DNA, including original shapes
+            W1_flat, b1, W2_flat, b2, W1_shape, W2_shape = self.fittest_dna
+
+            # Rebuild W1 and W2 from the flattened data with guaranteed 2D shape
+            W1 = W1_flat.reshape(W1_shape)
+            W2 = W2_flat.reshape(W2_shape)
+
+            # Define the clean 4-component DNA tuple for use
+            clean_dna = (W1, b1, W2, b2)
+            
+            # Clone the fittest
+            self.creatures.append(Creature(self.WORLD_SIZE, clean_dna))
             
             # The rest are mutated copies (Offspring)
             for _ in range(self.NUM_CREATURES - 1):
-                mutated_dna = NeuralNetwork.mutate((W1, b1, W2, b2))
+                mutated_dna = NeuralNetwork.mutate(clean_dna)
                 self.creatures.append(Creature(self.WORLD_SIZE, mutated_dna))
         else:
             # Generation 1: all creatures have random DNA
@@ -157,7 +162,14 @@ class Environment:
             creature.calculate_fitness()
 
         fittest = max(self.creatures, key=lambda c: c.fitness)
-        self.fittest_dna = fittest.nn.get_dna()
+        # OLD: self.fittest_dna = fittest.nn.get_dna() 
+        # NEW: Store W1 and W2 as flattened arrays (data only)
+        W1_flat = fittest.nn.W1.flatten()
+        W2_flat = fittest.nn.W2.flatten()
+
+        # Store the raw data, preserving the original shapes as metadata
+        self.fittest_dna = (W1_flat, fittest.nn.b1, W2_flat, fittest.nn.b2, 
+                            fittest.nn.W1.shape, fittest.nn.W2.shape)
 
         # Print results
         tribe_count = len(set(c.tribe_id for c in self.creatures if c.tribe_id is not None))
