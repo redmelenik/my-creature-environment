@@ -151,7 +151,7 @@ def _initialize_creatures(self):
                             # Join existing tribe
                             other.tribe_id = creature.tribe_id
 
-    def run_generation(self, time_steps=200):
+    def advance_generation(self, time_steps=200):
         """Runs the simulation for one full generation (era)."""
         self._initialize_creatures()
         self._generate_tokens() 
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     num_generations = 20
     
     for _ in range(num_generations):
-        best_fitness = env.run_generation(time_steps=200)
+        best_fitness = env.advance_generation(time_steps=200)
 
         # Check for convergence (perfect fitness)
         if best_fitness >= 1.0:
