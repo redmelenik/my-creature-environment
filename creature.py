@@ -7,11 +7,18 @@ import numpy as np
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation to a single NumPy matrix, relying on input to be correctly shaped."""
+    """Applies mutation to a single NumPy matrix with explicit shape enforcement."""
     
-    # Use the matrix directly, which is now guaranteed to be correctly shaped 2D
-    matrix_2d = np.array(matrix, dtype=np.float64, copy=True) 
+    # Force a fresh array copy with standard float dtype
+    matrix_clean = np.array(matrix, dtype=np.float64, copy=True) 
     
+    # CRITICAL: If the array is 1D (like the phantom shape), force it to be 2D 
+    # using reshape, which creates a view, then copy the view to ensure clean memory.
+    if matrix_clean.ndim == 1:
+        matrix_2d = matrix_clean.reshape(1, -1).copy()
+    else:
+        matrix_2d = matrix_clean.copy() # Should be 2D already (W1, W2)
+
     # 1. Get the validated shape
     mutation_shape = matrix_2d.shape
     
@@ -73,7 +80,7 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """
-        Applies mutation by handling W1 as a special case to ensure correct 2D shape.
+        Applies mutation by using four separate, independently named array copies.
         """
         
         # 1. Unpack the DNA tuple into four distinct, fresh variables
@@ -81,22 +88,14 @@ class NeuralNetwork:
         b1_copy = dna[1].copy()
         W2_copy = dna[2].copy()
         b2_copy = dna[3].copy()
-
-        # 2. **CRITICAL FIX: Special handling for W1**
-        # If W1 (the 11x12 matrix) has been corrupted to a 1D array, 
-        # force it back to 11x12 from its flattened data before mutation.
-        if W1_copy.ndim == 1 and W1_copy.size == (cls.INPUT_SIZE * cls.HIDDEN_SIZE):
-             # Force reshape from its raw data
-             W1_copy = W1_copy.reshape(cls.INPUT_SIZE, cls.HIDDEN_SIZE).copy()
         
-        # 3. Apply mutation to each component explicitly
-        # The mutation function now runs on a W1 that is guaranteed to be 11x12
+        # 2. Apply mutation to each component explicitly
         W1_mutated = _apply_mutation(W1_copy, mutation_rate, mutation_strength) 
         b1_mutated = _apply_mutation(b1_copy, mutation_rate, mutation_strength) 
         W2_mutated = _apply_mutation(W2_copy, mutation_rate, mutation_strength) 
         b2_mutated = _apply_mutation(b2_copy, mutation_rate, mutation_strength) 
         
-        # 4. Return the new tuple
+        # 3. Return the new tuple
         return (W1_mutated, b1_mutated, W2_mutated, b2_mutated)
 
 # ==============================================================================
