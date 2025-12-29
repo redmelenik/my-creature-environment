@@ -14,21 +14,21 @@ class Environment:
         self.creatures = []
         self.tokens = []
 
-    def _generate_tokens(self):
-        """Generates random positions and types for food tokens."""
-        self.tokens = []
-        # Bias the tokens towards Brain, then Body, then Legs
-        token_types = ['brain'] * 25 + ['body'] * 15 + ['legs'] * 10
-        
-        # Only use the number of tokens defined by INITIAL_TOKEN_COUNT
-        token_sample = np.random.choice(token_types, size=self.INITIAL_TOKEN_COUNT, replace=False)
-        
-        for t_type in token_sample:
-            self.tokens.append({
-                'type': t_type,
-                'position': np.random.rand(2) * self.WORLD_SIZE,
-                'collected': False
-            })
+def _generate_tokens(self):
+    """Generates random positions and types for food tokens."""
+    self.tokens = []
+    # Bias the tokens towards Brain, then Body, then Legs
+    token_types = ['brain'] * 25 + ['body'] * 15 + ['legs'] * 10
+    
+    # Only use the number of tokens defined by INITIAL_TOKEN_COUNT
+    token_sample = np.random.choice(token_types, size=self.INITIAL_TOKEN_COUNT, replace=False)
+    
+    for t_type in token_sample:
+        self.tokens.append({
+            'type': t_type,
+            'position': np.random.rand(2) * self.WORLD_SIZE,
+            'collected': False
+        })
 
         # 1. Spawn the "Seed" creature (cloned from the fittest)
         if self.fittest_dna:
@@ -58,33 +58,38 @@ class Environment:
         for creature in self.creatures:
              creature.id = uuid.uuid4()
              
-    def _initialize_creatures(self):
-        """Spawns 100 creatures, inheriting or mutating the fittest DNA."""
-        self.creatures = []
+    # In evolutionary_sim.py (inside the Environment class)
 
-        # 1. Spawn the "Seed" creature (cloned from the fittest)
-        if self.fittest_dna:
-            # Unpack the standard 4-component DNA tuple
-            W1, b1, W2, b2 = self.fittest_dna
-
-            # Define the clean 4-component DNA tuple for use, forcing copies for absolute safety
-            clean_dna = (W1.copy(), b1.copy(), W2.copy(), b2.copy())
-            
-            # Clone the fittest
-            self.creatures.append(Creature(self.WORLD_SIZE, clean_dna))
-            
-            # The rest are mutated copies (Offspring)
-            for _ in range(self.NUM_CREATURES - 1):
-                mutated_dna = NeuralNetwork.mutate(clean_dna)
-                self.creatures.append(Creature(self.WORLD_SIZE, mutated_dna))
-        else:
-            # Generation 1: all creatures have random DNA
-            for _ in range(self.NUM_CREATURES):
-                self.creatures.append(Creature(self.WORLD_SIZE))
+def _initialize_creatures(self):
+    """Spawns 100 creatures, inheriting or mutating the fittest DNA."""
+    self.creatures = []
+    
+    # 1. Spawn the "Seed" creature (cloned from the fittest)
+    if self.fittest_dna:
         
-        # Assign unique IDs for tribal tracking
-        for creature in self.creatures:
-             creature.id = uuid.uuid4()
+        # CRITICAL FIX: Unpack 4 components (W1, b1, W2, b2) 
+        # The 6-element storage was removed in a previous step.
+        W1, b1, W2, b2 = self.fittest_dna
+
+        # Define the clean 4-component DNA tuple for use, forcing copies for absolute safety
+        clean_dna = (W1.copy(), b1.copy(), W2.copy(), b2.copy())
+        
+        # Clone the fittest
+        self.creatures.append(Creature(self.WORLD_SIZE, clean_dna))
+        
+        # The rest are mutated copies (Offspring)
+        for _ in range(self.NUM_CREATURES - 1):
+            mutated_dna = NeuralNetwork.mutate(clean_dna)
+            self.creatures.append(Creature(self.WORLD_SIZE, mutated_dna))
+    else:
+        # Generation 1: all creatures have random DNA
+        for _ in range(self.NUM_CREATURES):
+            self.creatures.append(Creature(self.WORLD_SIZE))
+    
+    # Assign unique IDs for tribal tracking
+    import uuid # Ensure uuid is imported if not already at the top of the file
+    for creature in self.creatures:
+         creature.id = uuid.uuid4()
 
     def _find_closest_token_pos(self, creature):
         """Finds the normalized position of the closest uncollected token."""
