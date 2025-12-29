@@ -214,7 +214,15 @@ class Environment:
                 'tribe_id': c.tribe_id,
                 'is_fittest': is_fittest  # New flag
             })
-
+            # --- NEW CODE BLOCK: Define token_list ---
+            token_list = []
+            for t in self.tokens:
+                if not t['collected']: # Only send uncollected tokens to the frontend
+                    token_list.append({
+                        'type': t['type'],
+                        'position': list(t['position']) # Convert numpy array to list
+                    })
+            # --- END NEW CODE BLOCK ---
         # ... The rest of your export_state code ...
 
         return {
