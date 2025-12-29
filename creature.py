@@ -7,27 +7,23 @@ import numpy as np
 def _reconstruct_array(arr, shape):
     """
     Allocates a clean, new memory block of the correct shape and copies the data 
-    from the potentially corrupted array. This is the ultimate defensive measure.
+    from the potentially corrupted array using standard copy methods.
     """
     
-    # Check if the array contains the expected number of elements
     expected_size = np.prod(shape)
     if arr.size != expected_size:
-        # If the size is wrong, we cannot proceed safely.
-        # This should have been fixed by the flattening in evolutionary_sim.py, 
-        # but if it fails, raise an informative error.
         raise ValueError(f"Array size mismatch! Expected {expected_size} elements for shape {shape}, but found {arr.size} elements.")
 
     # 1. Allocate a brand new, empty array of the target shape and type.
     new_arr = np.empty(shape, dtype=np.float64)
     
-    # 2. Reshape the source array to 1D (vector) so we can copy its data sequentially.
-    # We must ensure the source is clean before we copy its data.
+    # 2. Prepare the source data as a flattened vector.
     source_flat = arr.copy().flatten().astype(np.float64)
 
-    # 3. Copy data from the source vector into the destination array's flat view.
-    # This copies the data buffer content, ignoring stride/shape metadata corruption.
-    np.copyto(new_arr.flat, source_flat)
+    # 3. CRITICAL FIX: Copy data from the flat source into the destination array.
+    # We copy the entire flat source array (source_flat) into the entire destination array (new_arr).
+    # NumPy is smart enough to handle the 1D -> 2D copy here as long as sizes match.
+    np.copyto(new_arr, source_flat.reshape(shape)) # Ensure source is correct shape for copyto
     
     return new_arr
 
