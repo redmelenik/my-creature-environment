@@ -180,6 +180,50 @@ class Environment:
             
             self.current_generation += 1
             return fittest.fitness
+    
+    # In evolutionary_sim.py, inside class Environment:
+
+    def export_state(self):
+        """Packages the current state of the environment for visualization."""
+        
+        # 1. Creature Data (position, fitness, type)
+        creature_data = []
+        for creature in self.creatures:
+            # NOTE: Position is a NumPy array, must convert to list/tuple for JSON
+            dna_tuple = creature.nn.get_dna()
+            creature_data.append({
+                'id': str(creature.id),
+                'position': creature.position.tolist(), 
+                'fitness': f"{creature.fitness:.4f}",
+                'alive': creature.alive,
+                'is_fittest': creature.fitness == max(c.fitness for c in self.creatures),
+                'brain_tokens': creature.brain_tokens,
+                'tribe_id': str(creature.tribe_id) if creature.tribe_id else None,
+                # We can also add a simplified representation of the DNA
+                'dna_weights_avg': float(np.mean(dna_tuple[0])) # Example NN feature
+            })
+
+        # 2. Token Data
+        token_data = [{
+            'position': token['position'].tolist(),
+            'type': token['type']
+        } for token in self.tokens if not token['collected']]
+
+        # 3. Summary Stats
+        fittest = max(self.creatures, key=lambda c: c.fitness)
+        summary = {
+            'generation': self.current_generation,
+            'fittest_score': fittest.fitness,
+            'fittest_tokens': {'B': fittest.brain_tokens, 'D': fittest.body_tokens, 'L': fittest.leg_tokens},
+            'alive_count': sum(c.alive for c in self.creatures),
+            'world_size': self.WORLD_SIZE
+        }
+        
+        return {
+            'summary': summary,
+            'creatures': creature_data,
+            'tokens': token_data
+        }
 
 # --- MAIN EXECUTION ---
 if __name__ == '__main__':
