@@ -7,33 +7,19 @@ import numpy as np
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation to a single NumPy matrix with explicit shape and type enforcement."""
+    """Applies mutation to a single NumPy matrix, relying on input to be correctly shaped."""
     
-    # 1. Force a fresh array copy with standard float dtype
-    matrix_clean = np.array(matrix, dtype=np.float64, copy=True) 
+    # Use the matrix directly, which is now guaranteed to be correctly shaped 2D
+    matrix_2d = np.array(matrix, dtype=np.float64, copy=True) 
     
-    # 2. Force 2D shape. The .atleast_2d() is critical here.
-    matrix_2d = np.atleast_2d(matrix_clean)
-    
-    # 3. CRITICAL: Handle the case where W1 is corrupted to (11, 1) or (11,) 
-    # and must be (11, 12). This is a defensive catch for W1 (the largest weight matrix).
-    # If the matrix is 2D but has the wrong size, we must fix it before getting the shape.
-    if matrix_2d.ndim == 2 and matrix_2d.shape == (11, 1):
-        # This catches a specific corruption where W1 (11x12) is seen as (11,1)
-        matrix_2d = matrix_clean.reshape(11, 12).copy()
-    elif matrix_2d.ndim == 1:
-        # If it collapses to 1D (like the phantom (11,) shape), force it to be 2D
-        matrix_2d = matrix_clean.reshape(1, -1).copy()
-
-    # 4. Get the validated shape
+    # 1. Get the validated shape
     mutation_shape = matrix_2d.shape
     
-    # 5. Create mask and mutation values explicitly matching the shape
+    # 2. Create mask and mutation values
     mask = np.random.rand(*mutation_shape) < rate
     mutation_values = np.random.randn(*mutation_shape) * strength
     
-    # 6. Apply mutation
-    # This line should now succeed.
+    # 3. Apply mutation
     matrix_2d[mask] += mutation_values
     
     return matrix_2d # Return the mutated, clean array
@@ -87,8 +73,7 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """
-        Creates a slightly mutated copy of the parent DNA and applies mutation
-        to four separate, independently named array copies to prevent memory bleed.
+        Applies mutation by handling W1 as a special case to ensure correct 2D shape.
         """
         
         # 1. Unpack the DNA tuple into four distinct, fresh variables
@@ -96,14 +81,22 @@ class NeuralNetwork:
         b1_copy = dna[1].copy()
         W2_copy = dna[2].copy()
         b2_copy = dna[3].copy()
+
+        # 2. **CRITICAL FIX: Special handling for W1**
+        # If W1 (the 11x12 matrix) has been corrupted to a 1D array, 
+        # force it back to 11x12 from its flattened data before mutation.
+        if W1_copy.ndim == 1 and W1_copy.size == (cls.INPUT_SIZE * cls.HIDDEN_SIZE):
+             # Force reshape from its raw data
+             W1_copy = W1_copy.reshape(cls.INPUT_SIZE, cls.HIDDEN_SIZE).copy()
         
-        # 2. Apply mutation to each component explicitly
+        # 3. Apply mutation to each component explicitly
+        # The mutation function now runs on a W1 that is guaranteed to be 11x12
         W1_mutated = _apply_mutation(W1_copy, mutation_rate, mutation_strength) 
         b1_mutated = _apply_mutation(b1_copy, mutation_rate, mutation_strength) 
         W2_mutated = _apply_mutation(W2_copy, mutation_rate, mutation_strength) 
         b2_mutated = _apply_mutation(b2_copy, mutation_rate, mutation_strength) 
         
-        # 3. Return the new tuple
+        # 4. Return the new tuple
         return (W1_mutated, b1_mutated, W2_mutated, b2_mutated)
 
 # ==============================================================================
