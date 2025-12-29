@@ -1,5 +1,6 @@
 import numpy as np
 import uuid 
+from creature import Creature, NeuralNetwork
 # Ensure Creature and NeuralNetwork are correctly imported
 
 class Environment:
