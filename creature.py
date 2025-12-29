@@ -4,6 +4,22 @@ import numpy as np
 # 1. NEURAL NETWORK CLASS (The Brain/DNA)
 # ==============================================================================
 
+def _reconstruct_array(arr, shape):
+    """
+    Extracts data to a raw buffer and reconstructs the array with a new, 
+    clean memory block and enforced shape. This is the deepest possible copy 
+    to prevent metadata corruption (like phantom shapes).
+    """
+    if arr.size == 0:
+        return np.zeros(shape, dtype=np.float64)
+        
+    # Get the raw data bytes
+    data_bytes = arr.astype(np.float64).tobytes()
+    
+    # Reconstruct the array from the raw bytes, enforcing shape and type
+    new_arr = np.frombuffer(data_bytes, dtype=np.float64).reshape(shape)
+    return new_arr.copy() # Return a final copy for absolute safety
+
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
@@ -80,22 +96,26 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """
-        Applies mutation by using four separate, independently named array copies.
+        Applies mutation after deeply cleaning the array memory buffers.
         """
         
-        # 1. Unpack the DNA tuple into four distinct, fresh variables
-        W1_copy = dna[0].copy()
-        b1_copy = dna[1].copy()
-        W2_copy = dna[2].copy()
-        b2_copy = dna[3].copy()
+        # 1. Define the target shapes for the weight matrices
+        W1_shape = (cls.INPUT_SIZE, cls.HIDDEN_SIZE)  # (11, 12)
+        W2_shape = (cls.HIDDEN_SIZE, cls.OUTPUT_SIZE) # (12, 4)
         
-        # 2. Apply mutation to each component explicitly
-        W1_mutated = _apply_mutation(W1_copy, mutation_rate, mutation_strength) 
-        b1_mutated = _apply_mutation(b1_copy, mutation_rate, mutation_strength) 
-        W2_mutated = _apply_mutation(W2_copy, mutation_rate, mutation_strength) 
-        b2_mutated = _apply_mutation(b2_copy, mutation_rate, mutation_strength) 
+        # 2. Reconstruct arrays from raw data buffer with guaranteed shapes
+        W1_clean = _reconstruct_array(dna[0], W1_shape)
+        b1_clean = _reconstruct_array(dna[1], (1, cls.HIDDEN_SIZE))
+        W2_clean = _reconstruct_array(dna[2], W2_shape)
+        b2_clean = _reconstruct_array(dna[3], (1, cls.OUTPUT_SIZE))
+
+        # 3. Apply mutation to the clean arrays
+        W1_mutated = _apply_mutation(W1_clean, mutation_rate, mutation_strength) 
+        b1_mutated = _apply_mutation(b1_clean, mutation_rate, mutation_strength) 
+        W2_mutated = _apply_mutation(W2_clean, mutation_rate, mutation_strength) 
+        b2_mutated = _apply_mutation(b2_clean, mutation_rate, mutation_strength) 
         
-        # 3. Return the new tuple
+        # 4. Return the new tuple
         return (W1_mutated, b1_mutated, W2_mutated, b2_mutated)
 
 # ==============================================================================
