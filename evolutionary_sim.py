@@ -9,7 +9,7 @@ class Environment:
         self.WORLD_SIZE = world_size
         self.NUM_CREATURES = num_creatures
         self.INITIAL_TOKEN_COUNT = initial_token_count
-        self.generation = 1
+        self.current_generation = 1
         self.fittest_dna = None # Stores the DNA of the best creature from the last era
         self.creatures = []
         self.tokens = []
