@@ -156,7 +156,7 @@ def _initialize_creatures(self):
         self._initialize_creatures()
         self._generate_tokens() 
         
-        print(f"--- Starting Generation {self.generation} ---")
+        print(f"--- Starting Generation {self.current_generation} ---")
         
         for step in range(time_steps):
             alive_count = sum(c.alive for c in self.creatures)
@@ -207,14 +207,14 @@ def _initialize_creatures(self):
         # Print results
         tribe_count = len(set(c.tribe_id for c in self.creatures if c.tribe_id is not None))
         
-        print(f"\n--- Generation {self.generation} Results ---")
+        print(f"\n--- Generation {self.currentgeneration} Results ---")
         print(f"Fittest Score: {fittest.fitness:.4f}")
         print(f"Tokens: B:{fittest.brain_tokens}, D:{fittest.body_tokens}, L:{fittest.leg_tokens}")
         print(f"Leg Directions: {fittest.leg_sub_tokens}")
         print(f"Tribes Formed: {tribe_count}")
         print(f"Fittest's Speech Tokens: {fittest.speech_tokens}")
         
-        self.generation += 1
+        self.current_generation += 1
         return fittest.fitness
 
 # --- MAIN EXECUTION ---
