@@ -7,23 +7,29 @@ import numpy as np
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation to a single NumPy matrix with explicit shape enforcement."""
+    """Applies mutation to a single NumPy matrix with explicit shape and type enforcement."""
     
-    # 1. Create a fresh array copy and force 2D shape
-    matrix_2d = np.atleast_2d(np.array(matrix, copy=True)) 
+    # 1. Force a fresh array copy with a standard float dtype (float64)
+    # This addresses potential dtype conflicts causing metadata corruption
+    matrix_clean = np.array(matrix, dtype=np.float64, copy=True) 
     
-    # 2. Get the shape of the matrix being mutated (e.g., (11, 12) or (1, 12))
+    # 2. Force 2D shape, necessary for weight matrices and biases
+    matrix_2d = np.atleast_2d(matrix_clean)
+    
+    # 3. Explicitly validate the array being mutated
+    if matrix_2d.ndim != 2:
+        # This should capture any unexpected 1D array corruption before it fails the broadcast
+        raise ValueError(f"Mutation array dimension error: Expected 2D, got {matrix_2d.ndim}D with shape {matrix_2d.shape}")
+    
+    # 4. Get the validated shape
     mutation_shape = matrix_2d.shape
     
-    # 3. Create the mask and mutation values EXPLICITLY using the determined shape
+    # 5. Create mask and mutation values explicitly matching the shape
     mask = np.random.rand(*mutation_shape) < rate
-    
-    # CRITICAL: Create the mutation values using the exact shape tuple
     mutation_values = np.random.randn(*mutation_shape) * strength
     
-    # 4. Apply mutation in place
-    # Since the shapes of 'mask' and 'mutation_values' now explicitly match 
-    # the shape of 'matrix_2d', the ValueError cannot occur here.
+    # 6. Apply mutation
+    # This line should now succeed because the shapes are rigorously validated and explicit
     matrix_2d[mask] += mutation_values
     
     return matrix_2d # Return the mutated, clean array
