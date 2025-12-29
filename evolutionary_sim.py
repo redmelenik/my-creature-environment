@@ -226,7 +226,7 @@ if __name__ == '__main__':
     num_generations = 20
     
     for _ in range(num_generations):
-        best_fitness = env.current_generation(time_steps=200)
+        best_fitness = env.run_generation(time_steps=200)
 
         # Check for convergence (perfect fitness)
         if best_fitness >= 1.0:
