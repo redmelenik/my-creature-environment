@@ -52,31 +52,32 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """
-        Creates a slightly mutated copy of the parent DNA.
-        Explicitly reshapes biases to prevent shape corruption.
+        Creates a slightly mutated copy of the parent DNA and applies mutation 
+        by addressing the four elements directly to prevent shape corruption.
         """
         
         # 1. Create a LIST of deep copies
         dna_list = [d.copy() for d in dna] 
 
-        # 2. ENFORCE BIAS SHAPES
-        # b1 is at index 1, b2 is at index 3
-        if dna_list[1].ndim == 1:
-             dna_list[1] = dna_list[1].reshape(1, -1) # b1 must be (1, 12)
-        if dna_list[3].ndim == 1:
-             dna_list[3] = dna_list[3].reshape(1, -1) # b2 must be (1, 4)
-
-        # 3. Iterate through the list
-        for i, matrix in enumerate(dna_list):
+        # 2. Iterate through the four specific indices (W1, b1, W2, b2)
+        # W1 is at index 0, b1 is at index 1, W2 is at index 2, b2 is at index 3
+        for i in range(4):
+            matrix = dna_list[i]
             
-            # Use the matrix directly (it should already be 2D now)
-            mask = np.random.rand(*matrix.shape) < mutation_rate
-            mutation_values = np.random.randn(*matrix.shape) * mutation_strength
+            # Ensure 2D shape for calculation
+            matrix_2d = np.atleast_2d(matrix)
+
+            # Generate mutation mask and values
+            mask = np.random.rand(*matrix_2d.shape) < mutation_rate
+            mutation_values = np.random.randn(*matrix_2d.shape) * mutation_strength
             
             # Apply mutation
-            matrix[mask] += mutation_values
+            matrix_2d[mask] += mutation_values
             
-            dna_list[i] = matrix # Reassign the modified array
+            # CRUCIAL: We must ensure the original list item maintains its intended shape.
+            # If the original matrix was 1D (like a bias), but was mutated as 2D, 
+            # we must save the 2D version back into the list.
+            dna_list[i] = matrix_2d
 
         return tuple(dna_list)
 
