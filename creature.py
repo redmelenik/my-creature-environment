@@ -7,19 +7,26 @@ import numpy as np
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation after ensuring the matrix is 2D and a clean float copy."""
+    """Applies mutation after ensuring the matrix is 2D, contiguous, and a clean float copy."""
     
-    # Force a clean copy and 2D shape, which is the standard, correct way.
-    matrix_2d = np.atleast_2d(matrix).astype(np.float64).copy()
+    # 1. Force a copy, ensure float type, and ensure C-contiguous memory layout.
+    # This aggressively clears corrupted metadata (strides/views).
+    matrix_clean = np.ascontiguousarray(matrix, dtype=np.float64) 
     
-    # 1. Get the validated shape
+    # 2. Force 2D shape using reshape, which is more powerful than atleast_2d
+    if matrix_clean.ndim == 1:
+        matrix_2d = matrix_clean.reshape(1, -1).copy()
+    else:
+        matrix_2d = matrix_clean.copy() # Should be 2D already
+
+    # 3. Get the validated shape
     mutation_shape = matrix_2d.shape
     
-    # 2. Create mask and mutation values
+    # 4. Create mask and mutation values
     mask = np.random.rand(*mutation_shape) < rate
     mutation_values = np.random.randn(*mutation_shape) * strength
     
-    # 3. Apply mutation (This is the line that must now work)
+    # 5. Apply mutation (This is the line that must now work)
     matrix_2d[mask] += mutation_values
     
     return matrix_2d
