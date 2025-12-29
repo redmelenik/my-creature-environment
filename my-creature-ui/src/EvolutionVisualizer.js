@@ -10,7 +10,7 @@ const EvolutionVisualizer = () => {
   const fetchState = useCallback(async () => {
     try {
       // Fetch the current state from the Flask server
-      const response = await fetch('http://localhost:5000/api/state');
+      const response = await fetch('http://127.0.0.1:5000/api/state');
       const newState = await response.json();
       setData(newState);
       
@@ -36,7 +36,7 @@ const EvolutionVisualizer = () => {
   const handleStartStop = async () => {
     if (!isRunning) {
       // Tell the Python server to start the simulation thread
-      await fetch('http://localhost:5000/api/start', { method: 'POST' });
+      await fetch('http://127.0.0.1:5000/api/start', { method: 'POST' });
       setIsRunning(true);
       fetchState(); // Fetch immediately after starting
     } else {
