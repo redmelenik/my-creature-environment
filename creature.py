@@ -7,29 +7,34 @@ import numpy as np
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation after ensuring the matrix is 2D, contiguous, and a clean float copy."""
+    """
+    Applies mutation by converting the NumPy array to a Python list and back. 
+    This is the ultimate method to clear memory corruption.
+    """
     
-    # 1. Force a copy, ensure float type, and ensure C-contiguous memory layout.
-    # This aggressively clears corrupted metadata (strides/views).
-    matrix_clean = np.ascontiguousarray(matrix, dtype=np.float64) 
+    # 1. Force a clean copy and get the target shape
+    matrix_clean = np.array(matrix, dtype=np.float64, copy=True)
+    mutation_shape = matrix_clean.shape
     
-    # 2. Force 2D shape using reshape, which is more powerful than atleast_2d
-    if matrix_clean.ndim == 1:
-        matrix_2d = matrix_clean.reshape(1, -1).copy()
-    else:
-        matrix_2d = matrix_clean.copy() # Should be 2D already
-
-    # 3. Get the validated shape
-    mutation_shape = matrix_2d.shape
+    # 2. Flatten the matrix into a 1D vector (list of values)
+    flat_data = matrix_clean.flatten()
     
-    # 4. Create mask and mutation values
-    mask = np.random.rand(*mutation_shape) < rate
-    mutation_values = np.random.randn(*mutation_shape) * strength
+    # 3. Create 1D mask and mutation values matching the flattened size
+    mask = np.random.rand(flat_data.size) < rate
+    mutation_values = np.random.randn(flat_data.size) * strength
     
-    # 5. Apply mutation (This is the line that must now work)
-    matrix_2d[mask] += mutation_values
+    # 4. Convert to Python list to break all NumPy metadata links
+    data_list = flat_data.tolist()
     
-    return matrix_2d
+    # 5. Apply mutation using standard Python list iteration (safe from broadcast error)
+    for i in range(flat_data.size):
+        if mask[i]:
+            data_list[i] += mutation_values[i]
+            
+    # 6. Rebuild the final mutated array from the clean list and reshape it
+    mutated_matrix = np.array(data_list, dtype=np.float64).reshape(mutation_shape)
+    
+    return mutated_matrix
 
 class NeuralNetwork:
     """Represents the creature's Brain and DNA (weights/biases)."""
