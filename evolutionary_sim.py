@@ -181,53 +181,53 @@ class Environment:
             self.current_generation += 1
             return fittest.fitness
 
-def export_state(self):
-    # --- Check 1: Handle Empty Creature List Safely ---
-    if not self.creatures:
-        # Return empty/placeholder data if the simulation is somehow empty
+    def export_state(self):
+        # --- Check 1: Handle Empty Creature List Safely ---
+        if not self.creatures:
+            # Return empty/placeholder data if the simulation is somehow empty
+            return {
+                'summary': {
+                    'generation': self.generation,
+                    'fittest_score': 0.0,
+                    'alive_count': 0,
+                    'fittest_tokens': {'B': 0, 'D': 0, 'L': 0},
+                    'world_size': self.WORLD_SIZE
+                },
+                'creatures': [],
+                'tokens': []
+            }
+
+        # --- Check 2: Continue with Fittest Calculation (only if creatures exist) ---
+        fittest = max(self.creatures, key=lambda c: c.fitness)
+        
+        creature_list = []
+        for c in self.creatures:
+            # Set is_fittest flag only for the one with the max score
+            is_fittest = (c.id == fittest.id)
+            
+            creature_list.append({
+                'id': c.id,
+                'position': list(c.position),
+                'fitness': round(c.fitness, 4),
+                'brain_tokens': c.brain_tokens,
+                'alive': c.alive,
+                'tribe_id': c.tribe_id,
+                'is_fittest': is_fittest  # New flag
+            })
+
+        # ... The rest of your export_state code ...
+
         return {
             'summary': {
                 'generation': self.generation,
-                'fittest_score': 0.0,
-                'alive_count': 0,
-                'fittest_tokens': {'B': 0, 'D': 0, 'L': 0},
+                'fittest_score': fittest.fitness,
+                'alive_count': sum(1 for c in self.creatures if c.alive),
+                'fittest_tokens': {'B': fittest.brain_tokens, 'D': fittest.body_tokens, 'L': fittest.leg_tokens},
                 'world_size': self.WORLD_SIZE
             },
-            'creatures': [],
-            'tokens': []
+            'creatures': creature_list,
+            'tokens': token_list,
         }
-
-    # --- Check 2: Continue with Fittest Calculation (only if creatures exist) ---
-    fittest = max(self.creatures, key=lambda c: c.fitness)
-    
-    creature_list = []
-    for c in self.creatures:
-        # Set is_fittest flag only for the one with the max score
-        is_fittest = (c.id == fittest.id)
-        
-        creature_list.append({
-            'id': c.id,
-            'position': list(c.position),
-            'fitness': round(c.fitness, 4),
-            'brain_tokens': c.brain_tokens,
-            'alive': c.alive,
-            'tribe_id': c.tribe_id,
-            'is_fittest': is_fittest  # New flag
-        })
-
-    # ... The rest of your export_state code ...
-
-    return {
-        'summary': {
-            'generation': self.generation,
-            'fittest_score': fittest.fitness,
-            'alive_count': sum(1 for c in self.creatures if c.alive),
-            'fittest_tokens': {'B': fittest.brain_tokens, 'D': fittest.body_tokens, 'L': fittest.leg_tokens},
-            'world_size': self.WORLD_SIZE
-        },
-        'creatures': creature_list,
-        'tokens': token_list,
-    }
 
 # --- MAIN EXECUTION ---
 if __name__ == '__main__':
