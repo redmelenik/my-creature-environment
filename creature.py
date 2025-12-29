@@ -5,19 +5,26 @@ import numpy as np
 # ==============================================================================
 
 # Helper function to apply mutation safely
+
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation to a single NumPy matrix, ensuring 2D shape."""
-    # 1. Force matrix to be 2D (Crucial)
-    matrix_2d = np.atleast_2d(matrix)
+    """Applies mutation to a single NumPy matrix, ensuring 2D shape and fresh data."""
     
-    # 2. Create mutation elements using the confirmed 2D shape
+    # CRITICAL: Create a new array from the data, guaranteeing a fresh memory block.
+    # We use np.array(matrix, copy=True) to avoid any potential view corruption.
+    matrix_clean = np.array(matrix, copy=True) 
+    
+    # Force the clean matrix to be 2D
+    matrix_2d = np.atleast_2d(matrix_clean)
+    
+    # Create mutation elements using the confirmed 2D shape
     mask = np.random.rand(*matrix_2d.shape) < rate
     mutation_values = np.random.randn(*matrix_2d.shape) * strength
     
-    # 3. Apply mutation in place
+    # Apply mutation in place
+    # This line should now succeed because matrix_2d is a fresh, properly shaped array
     matrix_2d[mask] += mutation_values
     
-    return matrix_2d
+    return matrix_2d # Return the mutated, clean array
 
 class NeuralNetwork:
     """Represents the creature's Brain and DNA (weights/biases)."""
@@ -69,10 +76,10 @@ class NeuralNetwork:
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """Creates a slightly mutated copy of the parent DNA using the helper function."""
         
-        # Create a list of deep copies
+        # 1. Create a list of deep copies (we keep this for safety)
         dna_list = [d.copy() for d in dna] 
 
-        # Apply mutation to each component using the safe helper function
+        # 2. Apply mutation to each component, overwriting the list with the clean result
         dna_list[0] = _apply_mutation(dna_list[0], mutation_rate, mutation_strength) # W1
         dna_list[1] = _apply_mutation(dna_list[1], mutation_rate, mutation_strength) # b1
         dna_list[2] = _apply_mutation(dna_list[2], mutation_rate, mutation_strength) # W2
