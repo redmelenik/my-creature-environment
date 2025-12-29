@@ -4,44 +4,14 @@ import numpy as np
 # 1. NEURAL NETWORK CLASS (The Brain/DNA)
 # ==============================================================================
 
-def _reconstruct_array(arr, shape):
-    """
-    Allocates a clean, new memory block of the correct shape and copies the data 
-    from the potentially corrupted array using standard copy methods.
-    """
-    
-    expected_size = np.prod(shape)
-    if arr.size != expected_size:
-        raise ValueError(f"Array size mismatch! Expected {expected_size} elements for shape {shape}, but found {arr.size} elements.")
-
-    # 1. Allocate a brand new, empty array of the target shape and type.
-    new_arr = np.empty(shape, dtype=np.float64)
-    
-    # 2. Prepare the source data as a flattened vector.
-    source_flat = arr.copy().flatten().astype(np.float64)
-
-    # 3. CRITICAL FIX: Copy data from the flat source into the destination array.
-    # We copy the entire flat source array (source_flat) into the entire destination array (new_arr).
-    # NumPy is smart enough to handle the 1D -> 2D copy here as long as sizes match.
-    np.copyto(new_arr, source_flat.reshape(shape)) # Ensure source is correct shape for copyto
-    
-    return new_arr
-
 # Helper function to apply mutation safely
 
 def _apply_mutation(matrix, rate, strength):
-    """Applies mutation to a single NumPy matrix with explicit shape enforcement."""
+    """Applies mutation after ensuring the matrix is 2D and a clean float copy."""
     
-    # Force a fresh array copy with standard float dtype
-    matrix_clean = np.array(matrix, dtype=np.float64, copy=True) 
+    # Force a clean copy and 2D shape, which is the standard, correct way.
+    matrix_2d = np.atleast_2d(matrix).astype(np.float64).copy()
     
-    # CRITICAL: If the array is 1D (like the phantom shape), force it to be 2D 
-    # using reshape, which creates a view, then copy the view to ensure clean memory.
-    if matrix_clean.ndim == 1:
-        matrix_2d = matrix_clean.reshape(1, -1).copy()
-    else:
-        matrix_2d = matrix_clean.copy() # Should be 2D already (W1, W2)
-
     # 1. Get the validated shape
     mutation_shape = matrix_2d.shape
     
@@ -49,10 +19,10 @@ def _apply_mutation(matrix, rate, strength):
     mask = np.random.rand(*mutation_shape) < rate
     mutation_values = np.random.randn(*mutation_shape) * strength
     
-    # 3. Apply mutation
+    # 3. Apply mutation (This is the line that must now work)
     matrix_2d[mask] += mutation_values
     
-    return matrix_2d # Return the mutated, clean array
+    return matrix_2d
 
 class NeuralNetwork:
     """Represents the creature's Brain and DNA (weights/biases)."""
@@ -103,26 +73,22 @@ class NeuralNetwork:
     @classmethod
     def mutate(cls, dna, mutation_rate=0.1, mutation_strength=0.1):
         """
-        Applies mutation after deeply cleaning the array memory buffers.
+        Applies mutation by using four separate, independently named array copies.
         """
         
-        # 1. Define the target shapes for the weight matrices
-        W1_shape = (cls.INPUT_SIZE, cls.HIDDEN_SIZE)  # (11, 12)
-        W2_shape = (cls.HIDDEN_SIZE, cls.OUTPUT_SIZE) # (12, 4)
+        # 1. Take a fresh copy of each component immediately
+        W1_copy = dna[0].copy()
+        b1_copy = dna[1].copy()
+        W2_copy = dna[2].copy()
+        b2_copy = dna[3].copy()
         
-        # 2. Reconstruct arrays from raw data buffer with guaranteed shapes
-        W1_clean = _reconstruct_array(dna[0], W1_shape)
-        b1_clean = _reconstruct_array(dna[1], (1, cls.HIDDEN_SIZE))
-        W2_clean = _reconstruct_array(dna[2], W2_shape)
-        b2_clean = _reconstruct_array(dna[3], (1, cls.OUTPUT_SIZE))
-
-        # 3. Apply mutation to the clean arrays
-        W1_mutated = _apply_mutation(W1_clean, mutation_rate, mutation_strength) 
-        b1_mutated = _apply_mutation(b1_clean, mutation_rate, mutation_strength) 
-        W2_mutated = _apply_mutation(W2_clean, mutation_rate, mutation_strength) 
-        b2_mutated = _apply_mutation(b2_clean, mutation_rate, mutation_strength) 
+        # 2. Apply mutation to each component explicitly
+        W1_mutated = _apply_mutation(W1_copy, mutation_rate, mutation_strength) 
+        b1_mutated = _apply_mutation(b1_copy, mutation_rate, mutation_strength) 
+        W2_mutated = _apply_mutation(W2_copy, mutation_rate, mutation_strength) 
+        b2_mutated = _apply_mutation(b2_copy, mutation_rate, mutation_strength) 
         
-        # 4. Return the new tuple
+        # 3. Return the new tuple
         return (W1_mutated, b1_mutated, W2_mutated, b2_mutated)
 
 # ==============================================================================
