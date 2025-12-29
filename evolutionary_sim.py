@@ -61,18 +61,24 @@ class Environment:
     def _initialize_creatures(self):
         """Spawns 100 creatures, inheriting or mutating the fittest DNA."""
         self.creatures = []
-        
+
         # 1. Spawn the "Seed" creature (cloned from the fittest)
         if self.fittest_dna:
             # Unpack the 6-element DNA, including original shapes
             W1_flat, b1, W2_flat, b2, W1_shape, W2_shape = self.fittest_dna
 
-            # Rebuild W1 and W2 from the flattened data with guaranteed 2D shape
-            W1 = W1_flat.reshape(W1_shape)
-            W2 = W2_flat.reshape(W2_shape)
-
+            # Rebuild W1 and W2 from the flattened data with guaranteed 2D shape,
+            # AND THEN FORCE A COPY to ensure clean memory.
+            W1 = W1_flat.reshape(W1_shape).copy()
+            W2 = W2_flat.reshape(W2_shape).copy()
+            
+            # The biases (b1, b2) are assumed clean because they were not flattened, 
+            # but we will copy them too for absolute safety.
+            b1_clean = b1.copy()
+            b2_clean = b2.copy()
+            
             # Define the clean 4-component DNA tuple for use
-            clean_dna = (W1, b1, W2, b2)
+            clean_dna = (W1, b1_clean, W2, b2_clean) # <-- ALL components are now fresh copies
             
             # Clone the fittest
             self.creatures.append(Creature(self.WORLD_SIZE, clean_dna))
