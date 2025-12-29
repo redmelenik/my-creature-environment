@@ -6,19 +6,30 @@ import numpy as np
 
 def _reconstruct_array(arr, shape):
     """
-    Extracts data to a raw buffer and reconstructs the array with a new, 
-    clean memory block and enforced shape. This is the deepest possible copy 
-    to prevent metadata corruption (like phantom shapes).
+    Allocates a clean, new memory block of the correct shape and copies the data 
+    from the potentially corrupted array. This is the ultimate defensive measure.
     """
-    if arr.size == 0:
-        return np.zeros(shape, dtype=np.float64)
-        
-    # Get the raw data bytes
-    data_bytes = arr.astype(np.float64).tobytes()
     
-    # Reconstruct the array from the raw bytes, enforcing shape and type
-    new_arr = np.frombuffer(data_bytes, dtype=np.float64).reshape(shape)
-    return new_arr.copy() # Return a final copy for absolute safety
+    # Check if the array contains the expected number of elements
+    expected_size = np.prod(shape)
+    if arr.size != expected_size:
+        # If the size is wrong, we cannot proceed safely.
+        # This should have been fixed by the flattening in evolutionary_sim.py, 
+        # but if it fails, raise an informative error.
+        raise ValueError(f"Array size mismatch! Expected {expected_size} elements for shape {shape}, but found {arr.size} elements.")
+
+    # 1. Allocate a brand new, empty array of the target shape and type.
+    new_arr = np.empty(shape, dtype=np.float64)
+    
+    # 2. Reshape the source array to 1D (vector) so we can copy its data sequentially.
+    # We must ensure the source is clean before we copy its data.
+    source_flat = arr.copy().flatten().astype(np.float64)
+
+    # 3. Copy data from the source vector into the destination array's flat view.
+    # This copies the data buffer content, ignoring stride/shape metadata corruption.
+    np.copyto(new_arr.flat, source_flat)
+    
+    return new_arr
 
 # Helper function to apply mutation safely
 
