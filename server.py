@@ -40,14 +40,14 @@ def get_state():
     return jsonify(current_state)
 
 @app.route('/api/start', methods=['POST'])
-
 def start_simulation():
-    """Endpoint to start the simulation thread."""
-    global is_running
-    if not is_running:
-        thread = threading.Thread(target=run_simulation_thread)
-        thread.start()
-        return jsonify({"status": "Simulation started"}), 200
+    """Endpoint to start one generation and update the state."""
+    global is_running, sim_thread
+    if sim_thread is None or not sim_thread.is_alive():
+        sim_thread = threading.Thread(target=run_generation_thread)
+        sim_thread.start()
+        # Immediately set is_running to True, even if the thread is brief
+        return jsonify({"status": "Generation started"}), 200
     else:
         return jsonify({"status": "Simulation is already running"}), 200
 
