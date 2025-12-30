@@ -2,7 +2,7 @@ Evolutionary Algorithm using  neural nets
 
 Ultimate goal is for a creature to evolve to a perfect point where it can procreate multiply and become the dominant species
 
-Evole creatures with the following 3 characteristics 
+Evolve creatures with the following 3 characteristics 
 Gender (M/F)
 Brain
 Body
