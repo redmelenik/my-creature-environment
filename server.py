@@ -12,37 +12,35 @@ CORS(app) # Allows React app running on a different port to access
 env = Environment(world_size=100, num_creatures=100)
 current_state = env.export_state()
 is_running = False
+sim_thread = None   
 
-def run_simulation_thread():
-    """Runs the entire simulation loop in a background thread."""
-    global current_state, is_running
+def run_generation_thread():
+    """Runs a single generation's worth of steps in a background thread."""
+    global current_state, is_running, env
     is_running = True
     
-    num_generations = 20 # Or whatever number you want
+    print(f"Server starting Generation {env.current_generation}...")
     
-    for gen in range(env.current_generation, env.current_generation + num_generations):
-        print(f"Server starting Generation {gen}...")
+    # Run the core simulation steps (e.g., 200 steps)
+    best_fitness = env.advance_generation(time_steps=200)
+    
+    # After the generation is complete, update the global state
+    current_state = env.export_state()
+    
+    if best_fitness >= 1.0:
+        print("\n!!! GOAL ACHIEVED: Simulation stopping. !!!")
         
-        # This is where your core simulation runs
-        best_fitness = env.advance_generation(time_steps=200)
-        
-        # After each generation, update the global state
-        current_state = env.export_state()
-        time.sleep(1) # Give the frontend time to refresh
-
-        if best_fitness >= 1.0:
-            print("\n!!! GOAL ACHIEVED: Simulation stopping. !!!")
-            break
-            
     is_running = False
-    print("Simulation thread finished.")
+    print(f"Generation {env.current_generation - 1} thread finished.")
 
 @app.route('/api/state', methods=['GET'])
+
 def get_state():
     """Endpoint for the React app to fetch the current world state."""
     return jsonify(current_state)
 
 @app.route('/api/start', methods=['POST'])
+
 def start_simulation():
     """Endpoint to start the simulation thread."""
     global is_running
