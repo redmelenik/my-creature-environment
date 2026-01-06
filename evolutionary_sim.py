@@ -152,9 +152,14 @@ class Environment:
                         len(creature.touch_counter) / self.NUM_CREATURES          
                     ]
 
-                    # 2. BRAIN PROCESS & ACTION
-                    action = creature.nn.forward(inputs)
-                    creature.move(action) 
+                   # 2. BRAIN PROCESS & ACTION
+                    action_outputs = creature.nn.forward(inputs) 
+                    # 🚨 ADD THIS CRITICAL LINE TO FIND THE BEST ACTION INDEX 🚨
+                    # np.argmax returns the index (0, 1, 2, or 3) corresponding to the highest value in the array.
+                    action_index = np.argmax(action_outputs) 
+
+                    # Pass the single integer index to the move function
+                    creature.move(action_index) # ⬅️ FIXED: Now passes the integer 0, 1, 2, or 3
 
                     # 3. INTERACTION
                     self._handle_interactions(creature)
