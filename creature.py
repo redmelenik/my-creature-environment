@@ -163,7 +163,7 @@ class Creature:
         if not self.alive: return
 
         # speed = self.get_speed(action_index)
-        speed = 5.0 # ⬅️ TEMPORARY HARDCODED SPEED (5 units per step on a 100-unit map)
+        speed = 50.0 # ⬅️ TEMPORARY HARDCODED SPEED (5 units per step on a 100-unit map)
 
         # 0: Forward (+Y), 1: Backward (-Y), 2: Left (-X), 3: Right (+X)
         if action_index == 0: 
