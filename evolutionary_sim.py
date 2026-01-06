@@ -89,7 +89,7 @@ class Environment:
             for token in self.tokens:
                 if not token['collected']:
                     collision_dist = np.linalg.norm(creature.position - token['position'])
-                    if collision_dist < 1.0: # Simple collision threshold
+                    if collision_dist < 5.0: # Simple collision threshold
                         if creature.collect_token(token['type']):
                             token['collected'] = True
                             
